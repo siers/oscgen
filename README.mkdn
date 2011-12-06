@@ -1,0 +1,26 @@
+OscillationGenerator -- the raw signal generator.
+===
+
+Requirements
+---
+Get something that accepts raw data, and tell it to read it as 8bit/sample && 44kHz.
+
+Usage
+---
+Set the sound to generate add this line:
+    `wave :type => :sine, :frequency => note(:do)`
+in
+    `OscillationGenerator.run do`
+block. Define new generators with
+    `define :generator do |t|`
+where t will represent time in [0; 360).
+
+You can change the output settings with bash pipes or 
+    `output`
+command. Same thing with
+    `rate`
+.
+
+Note function is a helper method that'll generate the frequency for your selected sound. Pass the note as the first argument(e.g. :do). Then you can pass :bemmole or :sharp and *number*.ocatve, like so:
+    `wave :type => :cosine,    :frequency => note(:mi, :bemmole, 1.octave), :offset => 90`
+. The :offset argument will push the graph bit further. 360 will represent a full lap.
