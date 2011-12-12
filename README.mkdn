@@ -1,12 +1,16 @@
-OscillationGenerator -- the raw signal generator.
+OscillationGenerator — the raw signal generator.
 ===
 
 Requirements
 ---
-Get something that accepts raw data, and tell it to read it as 8bit/sample && 44kHz.
+Ruby interpreter, a computer with speakers.
+
+Get something that accepts raw data, and tell it to read it as 8bit/sample && 44kHz or generate a WAV format file and play it with almost any music player.
 
 Usage
 ---
+The configuration is pretty straight forward and can be seen at the EOF. (also check __END__)
+
 Set the sound to generate add this line:
     `wave :type => :sine, :frequency => note(:do)`
 in
