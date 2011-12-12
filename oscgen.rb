@@ -106,7 +106,10 @@ class OscillationGenerator
     setup_rates
     @wave_count = @waves.length
 
-    loop do
+    return if @wave_count < 1
+    ticks = @length * @rate
+
+    while ticks > 0 or not defined? @length do
       voltages = []
 
       @waves.each_with_index do |wave, i|
@@ -119,6 +122,7 @@ class OscillationGenerator
 
       voltage = mix(voltages)
       @pipe.write(voltage.to_i.chr)
+      ticks -= 1
     end
   end
 
@@ -128,15 +132,55 @@ class OscillationGenerator
     end
   end
 
+  def format type
+    if not @rate
+      whine 'Rate not set before formatting.'
+    elsif not defined? @length or not @length > 0
+      whine 'Format requires positive length.'
+    end
+    case type
+    when :wav
+      headers = [
+      # '*data*',   # endianess Description
+        'RIFF',     # big ChunkID
+        @rate * @length + 36, # lit Chunk size
+        'WAVE',     # big Format
+
+        'fmt ',     # big SubchunkID
+        16,         # lit SubchunkSize
+        1,          # 2b,lit AudioFormat(1 = PCM, others imply compression)
+        1,          # 2b,lit NumChannels. 1/2 = mono/stereo.
+        @rate,      # lit SampleRate
+        @rate,      # lit ByteRate = NumChannels * SampleRate BitsPerSample/8
+        1,          # 2b,lit BlockAlign = NumChannels * BitsPerSample/8
+        8,          # 2b,lit BitsPerSample
+        # end of 'fmt ' subchunk
+
+        'data',     # big SubchunkID
+        @rate * @length, # lit SubchunkSize
+      ]
+      write(headers.pack('a4La4' + 'a4VvvVVvv' + 'a4V'))
+    end
+  end
+  def write data
+    @pipe.write(data)
+  end
   def output pipe
-    @pipe = pipe
+    if pipe.is_a? String
+      @pipe = File.open(pipe, 'wb')
+    else
+      @pipe = pipe
+    end
   end
   def rate arg
     @rate = arg # Get through @rate, setter provided for prettyness only.
   end
+  def length arg
+    @length = arg
+  end
 
   def whine about
-    $stderr.puts(about)
+    $stderr.puts("#{ $0 }: #{ about }")
     exit(1)
   end
 end
@@ -162,8 +206,10 @@ OscillationGenerator.run do
     rand * 2 - 1
   end
 
-  output $>
-  rate 44000
+  rate      44100
+  output    'chord.wav' # $> for stdout.
+  length    5 # seconds
+  format    :wav # Comment, remove headers.
 
   wave :type => :sine,      :frequency => note(:do)
   wave :type => :cosine,    :frequency => note(:mi, :bemmole, 1.octave), :offset => 90
@@ -171,3 +217,4 @@ end
 
 __END__
 ./oscgen.rb | aplay --rate=44000
+./oscgen.rb do | lame -r --unsigned -s 44.1 --bitwidth 8 - do.mp3 -m m
