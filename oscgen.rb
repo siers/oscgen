@@ -107,7 +107,7 @@ class OscillationGenerator
     @wave_count = @waves.length
 
     return if @wave_count < 1
-    ticks = @length * @rate
+    ticks = (@length * @rate if defined? @length) || 0
 
     while ticks > 0 or not defined? @length do
       voltages = []
@@ -135,7 +135,7 @@ class OscillationGenerator
   def format type
     if not @rate
       whine 'Rate not set before formatting.'
-    elsif not defined? @length or not @length > 0
+    elsif (not defined? @length and type != :wav) or not @length > 0
       whine 'Format requires positive length.'
     end
     case type
@@ -208,7 +208,7 @@ OscillationGenerator.run do
 
   rate      44100
   output    'chord.wav' # $> for stdout.
-  length    5 # seconds
+  length    5 # seconds, comment for infinity.
   format    :wav # Comment, remove headers.
 
   wave :type => :sine,      :frequency => note(:do)
