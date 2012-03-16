@@ -76,7 +76,10 @@ class OscillationGenerator
   end
 
   def wave(opts)
-    @waves << {:frequency => 8000, :counter => 0, :offset => 0}.merge(opts)
+    if opts.has_key? :amplitude and not (0..128) === opts[:amplitude]
+      whine "Amplitude(#{ opts[:Amplitude] }) exceeeds range 0 -- 128."
+    end
+    @waves << {:frequency => 8000, :counter => 0, :offset => 0, :amplitude => 128}.merge(opts)
   end
 
   # Defines a generator.
@@ -115,7 +118,7 @@ class OscillationGenerator
       @waves.each_with_index do |wave, i|
         # t ∈ [0; 360)
         t = wave[:counter] * wave[:coefficient] + wave[:offset]
-        voltage = @@generators[wave[:type]].call(t) * 128
+        voltage = @@generators[wave[:type]].call(t) * wave[:amplitude]
         voltages << voltage
         @waves[i][:counter] = (wave[:counter] + 1) % wave[:period]
       end
@@ -211,7 +214,8 @@ OscillationGenerator.run do
   length    5 # seconds, comment for infinity.
   format    :wav # Comment, remove headers.
 
-  wave :type => :sine,      :frequency => note(:do)
+  # wave takes :type, :frequency, :offset(0..360), :amplitude()
+  wave :type => :sine,      :frequency => note(:do), :amplitude => 30
   wave :type => :cosine,    :frequency => note(:mi, :bemmole, 1.octave), :offset => 90
 end
 
